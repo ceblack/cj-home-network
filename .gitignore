@@ -1,0 +1,15 @@
+.ssh/
+.ssh/*
+
+# device config backups belong in S3, not here: a .unf carries Wi-Fi passphrases
+*.unf
+*.unifi
+backups/
+
+# anything holding credentials
+*.env
+.env
+*-with-secrets*
+
+__pycache__/
+*.pyc
