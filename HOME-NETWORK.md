@@ -10,15 +10,13 @@ over. Most of the machinery does not: one appliance is the router, the switch
 is unmanaged, and there is no EdgeOS, no separate controller, no Lab, no IoT
 VLAN, no NAS, no cameras, no EC2.
 
-Same rule of engagement as the office repo: this document is advisory. It
-produces commands; CJ runs them. Specifically:
+`~/.claude/CLAUDE.md` holds the principle — reads are free, a write to a named
+system needs a named person. This repository's two columns:
 
-- **Network infrastructure is CJ's alone** — the UX7 (`BF-UX-001`), the ISP
-  router and ONT, and every AWS write. Produce paste-ready commands; CJ runs
-  them and reports back. Read-only `aws` describe/get/list is fine.
-- **The Pi (`bf-home-001`) is not on that list.** It is a box being built from
-  scratch that holds nothing irreplaceable (§14). Act on it with CJ's grant;
-  nothing on it is production.
+- **CJ's:** the UX7 (`BF-UX-001`), the ISP router and ONT, and every AWS write.
+  Produce paste-ready commands; he runs them and reports back.
+- **Not his:** the Pi (`bf-home-001`). It is a box being built from scratch that
+  holds nothing irreplaceable (§14), so act on it; nothing on it is production.
 - **No CloudFormation `deploy --execute`.** §10.1 deliberately uses
   `--no-execute-changeset`; CJ reviews and executes the change set.
 - **Secrets never enter git** — the UniFi local-admin password, `.unf` files,
