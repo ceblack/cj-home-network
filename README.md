@@ -4,8 +4,8 @@ Black family home network: design record, remote access, config backups to S3.
 
 | File | What |
 |---|---|
-| `SESSION-HANDOFF.md` | **Read first.** Session-to-session handoff: execution boundary, current state, what the last session verified, open questions only someone at the house can answer |
-| `HOME-NETWORK.md` | The design record. Decisions, hardware, addressing, VLANs, firewall, wireless, the Pi, remote access, UX7 → S3 backups, DR, punch list |
+| `HOME-NETWORK.md` | **Read first.** The design record: the execution boundary, decisions, hardware, addressing, VLANs, firewall, wireless, the Pi, remote access, UX7 → S3 backups, DR, and the punch list — including the questions only someone at the house can answer |
+| `CHANGELOG.md` | What changed and when, newest first. A historical record: no rules, no grants, not a memory |
 
 Nothing here is built yet. `HOME-NETWORK.md` is the target state and the
 commands that get there; it has never been executed, so treat it as a careful

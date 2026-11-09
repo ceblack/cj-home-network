@@ -11,7 +11,36 @@ is unmanaged, and there is no EdgeOS, no separate controller, no Lab, no IoT
 VLAN, no NAS, no cameras, no EC2.
 
 Same rule of engagement as the office repo: this document is advisory. It
-produces commands; CJ runs them.
+produces commands; CJ runs them. Specifically:
+
+- **Network infrastructure is CJ's alone** — the UX7 (`BF-UX-001`), the ISP
+  router and ONT, and every AWS write. Produce paste-ready commands; CJ runs
+  them and reports back. Read-only `aws` describe/get/list is fine.
+- **The Pi (`bf-home-001`) is not on that list.** It is a box being built from
+  scratch that holds nothing irreplaceable (§14). Act on it with CJ's grant;
+  nothing on it is production.
+- **No CloudFormation `deploy --execute`.** §10.1 deliberately uses
+  `--no-execute-changeset`; CJ reviews and executes the change set.
+- **Secrets never enter git** — the UniFi local-admin password, `.unf` files,
+  anything matching `*.env`. `.gitignore` already covers `.ssh/`, `*.unf`,
+  `*.unifi`, `backups/` and `*.env`. Do not weaken it.
+
+What changed and when is in `CHANGELOG.md`.
+
+**Git.** The remote is `git@github.com:ceblack/cj-home-network.git` over SSH,
+switched from HTTPS because a deploy key only authenticates over SSH. The key is
+`.ssh/deploy_key` (4096-bit RSA, `cj@OSCILLAS-0010`); `.gitignore` blocks
+`.ssh/`, so **git does not carry it** — it exists only on `OSCILLAS-0010`, and
+`core.sshCommand` is local config that does not survive a clone either. Cloning
+over SSH with CJ's own GitHub key needs nothing further. To use the deploy key
+instead, copy it out of band, `chmod 600` it, and
+`git config --local core.sshCommand 'ssh -i .ssh/deploy_key -o IdentitiesOnly=yes'`.
+Commit and push only when CJ asks.
+
+**AWS.** `black-family` is account `883357539412`, reached by chaining off the
+`oscillas` SSO profile through `OrganizationAccountAccessRole`, region
+`us-east-1`. Log in with `aws sso login --sso-session default-sso`, then confirm
+with `aws sts get-caller-identity --profile black-family`.
 
 ---
 
@@ -887,6 +916,18 @@ From the office build. These cost real time there and most of them apply here.
   (§8.2) and the UX7 fallbacks (§9.3) exist for this reason alone.
 - **Reservations are not leases.** A fixed IP set on a client does not show up
   in a lease table. Look for it where it was set.
+- **`172.21.0.0/16` collides with Docker on any machine of CJ's that runs
+  compose stacks.** Docker's default pool is `172.17.0.0/12` and it allocates
+  /16s from it as projects appear; on `OSCILLAS-0010`, `172.21.0.0/16` is
+  already a bridge. D4 is unaffected (SSM port-forwards resolve the address on
+  the Pi), but D5's WireGuard `AllowedIPs = 172.21.0.0/16` would tie with the
+  Docker route on prefix length. Check any machine that would terminate that
+  tunnel with `ip -br addr; docker network ls; ip route get 172.21.10.1`.
+  Remedies, CJ's to choose between: pin Docker's pool away from `172.21` in
+  `/etc/docker/daemon.json` (`default-address-pool`, smaller change, but it does
+  not apply to networks already created — they must be recreated), or move the
+  home base off `172.21` (larger blast radius: every address in this document
+  changes).
 - **Self-signed certificates everywhere.** `curl -k` against the UX7 on its LAN
   address is correct, not a shortcut.
 - **One local-only admin, no MFA, for automation.** An SSO account with MFA
@@ -992,6 +1033,35 @@ Build order first, then the open items.
       Decide per network.
 - [ ] **A wired Main device**, if one ever appears. The unmanaged switch then
       forces a choice: tag it too, or buy the VLAN-capable switch from §4.
+
+**Answerable only from the house** — all read-only observations; none needs
+anything changed.
+
+- [ ] **Q1. Is the WAN a real public IPv4, or CGNAT?** Compare the UX7's WAN
+      address against a public IP checker. `100.64.0.0/10` on the WAN interface
+      is CGNAT outright; a private address means double NAT behind the ISP box.
+      **Gates D5 entirely** — WireGuard plus UniFi DDNS is useless behind CGNAT.
+- [ ] **Q2. UX7 firmware and Network application version** (UniFi OS → Settings
+      → System). §2 requires Network ≥ 9.0.108; the zone-based firewall in §6
+      does not exist below 9.0.
+- [ ] **Q3. Does the TP-Link pass 802.1Q tags?** §4's test, from the Pi:
+      `ip -br addr show eth0.10` then `ping -c3 172.21.10.1`. **Gates D3 and the
+      whole Pi-on-Mgmt design**; §4 has the fallback ladder.
+- [ ] **Q4. TP-Link model number** — the label on the box. Determines whether
+      Q3's answer was predictable. Record it in §2.
+- [ ] **Q5. Does this 3B+ support USB mass-storage boot?** The 3B+ does without
+      the OTP fuse the plain 3B needs — confirm on the actual board. §8.3; a $20
+      SSD removes the SD-card failure mode.
+- [ ] **Q6. Is the ISP device bridgeable?** From the ISP box's own UI. Double
+      NAT is survivable; note it either way.
+
+**To bring this document from plan to record**, once the build runs: the `mi-…`
+SSM node id into §9.1 and the two `tunnel.env` lines in §9.2, which currently
+read `mi-REPLACE`; Q1–Q6 each as a one-line answer; the §4 tag-test result and
+which branch of the fallback ladder was taken; and any step in §8 or §10.3 where
+the documented command did not work as written. **This document has never been
+executed** — it is a careful plan, not a tested runbook, so divergences are
+expected and they belong in the record.
 - [ ] **Tighten Main → Mgmt** to an address group, if the house ever has more
       people with laptops on Main than CJ.
 
